@@ -1,0 +1,26 @@
+INSTALL
+    make
+    sudo make install
+
+USE
+    talk
+        enter interactive shell, then you can use commands to use it
+        commands that you can use:
+            send ip msg                 # send msg to ip
+            send ip `shell command`     # exec this shell command and send the result
+            l                           # read the first msg of msg queue
+            quit                        # exit interactive shell
+        
+    echo "abc" | talk ip
+        talk can recive pipe input
+        
+
+TODO
+    alias command
+        using this you can alias a ip to a name
+
+    ncurses
+        separate sender and reciver. In a word, you can recive msg when you write a msg
+
+    dynamic search peer
+        when talk enters interactive shell, it can search peers who open the port 44944 

@@ -15,7 +15,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <curses.h>
+//#include <curses.h>
 #include <poll.h>
 
 #define MAX_LEN 10240
