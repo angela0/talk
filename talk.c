@@ -19,15 +19,23 @@
 #include <poll.h>
 
 #define MAX_LEN 10240
+#define TMPFILE "/tmp/output"
 
 const uint32_t port = 44944;
 int notarget = 0;
+
+void sendfun(char *peerip, char *msg)
+{
+    
+}
 
 void dowhile(int sd)
 {
     int stop = 0;
     char cmd[16];
     char peer[64];
+    char msg[MAX_LEN];
+    char buf[MAX_LEN];
     int ret;
 
     struct pollfd pfd;
@@ -45,16 +53,20 @@ void dowhile(int sd)
                 int size;
                 struct sockaddr_in srcaddr;
                 socklen_t len;
-                printf(">");
+                write(1, ">\n", 2);
                 do {
                     size = recvfrom(sd, buf, MAX_LEN, 0, (struct sockaddr *)&srcaddr, &len);
                     if (size < 0) {
                         stop = 1;
                         break;
+                    } else if (size == 0) {
+                        break; 
                     }
+                    if (buf[size-1] == '\n')
+                        size--;
                     write(1, buf, size);
                 } while (size != 0);
-                printf("[ from %s ]", inet_ntop(AF_INET, &srcaddr.sin_addr, buf, INET_ADDRSTRLEN));
+                printf("\n[ from %s ]\n", inet_ntop(AF_INET, &srcaddr.sin_addr, buf, INET_ADDRSTRLEN));
             }
         }
 
@@ -62,8 +74,27 @@ void dowhile(int sd)
         scanf("%s", cmd);
         if (strncmp(cmd, "send", 4) == 0) {
             scanf("%s", peer);
+            struct sockaddr_in peeraddr;
+            bzero(&peeraddr, sizeof(peeraddr));
+            peeraddr.sin_family = AF_INET;
+            peeraddr.sin_port = htons(port);
+            inet_pton(AF_INET, peer, &peeraddr.sin_addr);
+            fgetc(stdin);
+            fgets(msg, MAX_LEN, stdin);
+            int len = strlen(msg);
+            if (msg[0] == '`' && msg[len-2] == '`') {
+                msg[len-2] = '\0';
+                sprintf(buf, "%s > " TMPFILE, msg+1);
+                system(buf);
+                FILE *fp = fopen(TMPFILE, "r");
+                fread(msg, MAX_LEN, 1, fp);
+                len = strlen(msg);
+                fclose(fp);
+            }
+            sendto(sd, msg, len, 0, (struct sockaddr *)&peeraddr, sizeof(peeraddr));
+            sendto(sd, msg, 0, 0, (struct sockaddr *)&peeraddr, sizeof(peeraddr));
         } else if (strncmp(cmd, "alias", 5) == 0) {
-
+            
         } else if (strncmp(cmd, "quit", 4) == 0) {
             stop = 1;
         }
@@ -101,6 +132,7 @@ int main(int argc, char *argv[])
     int sd = listen_port();
     if (notarget == 1) {
         dowhile(sd);
+        /* system("rm -f " TMPFILE); */
     } else {
         char msg[MAX_LEN+1];
         int size;
